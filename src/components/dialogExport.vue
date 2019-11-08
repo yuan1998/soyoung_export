@@ -32,10 +32,17 @@
 </template>
 
 <script>
-    import moment                                                              from "moment";
-    import { calendarInfoData, calendarListData, goodsInfoData, postInfoData } from "../Api";
-    import { $ColumnsHeader, $SheetName }                                      from "../utils/constans";
-    import * as ExcelJS                                                        from "exceljs";
+    import moment                         from "moment";
+    import {
+        calendarInfoData,
+        calendarListData,
+        goodsInfoData,
+        goodsListData,
+        postInfoData,
+        postListData
+    }                                     from "../Api";
+    import { $ColumnsHeader, $SheetName } from "../utils/constans";
+    import * as ExcelJS                   from "exceljs";
 
     export default {
         name    : "dialog-export",
@@ -101,7 +108,7 @@
                         if (index > -1) {
                             let count = data[ index ].data;
                             time.forEach((item, index) => {
-                                newProduct[ item ] = count[ index ];
+                                newProduct[ item ] = parseFloat(count[ index ]);
                             });
                         }
                     }
@@ -142,7 +149,7 @@
                         if (index > -1) {
                             let count = data[ index ].data;
                             time.forEach((item, index) => {
-                                newProduct[ item ] = count[ index ];
+                                newProduct[ item ] = parseFloat(count[ index ]);
                             });
                         }
                     }
@@ -183,7 +190,7 @@
                         if (index > -1) {
                             let count = data[ index ].data;
                             time.forEach((item, index) => {
-                                newProduct[ item ] = count[ index ];
+                                newProduct[ item ] = parseFloat(count[ index ]);
                             });
                         }
                     }
@@ -206,19 +213,44 @@
                 }
                 return null;
             },
+            sumItem(data) {
+                let sum = {
+                    id  : '合计',
+                    name: 0,
+                };
+                data.forEach((item) => {
+                    for (let key in item) {
+                        if (key !== 'id' && key !== 'name') {
+                            if (!sum[ key ]) sum[ key ] = 0;
+                            sum[ key ] += item[ key ];
+                            sum.name += item[ key ]
+                        }
+                    }
+                });
+                return sum;
+            },
+            dataGroup(res) {
+                let calendar = res[ 0 ];
+                let post     = res[ 1 ];
+                let good     = res[ 2 ];
+                calendar.push(this.sumItem(calendar));
+                good.push(this.sumItem(good));
+                post.push(this.sumItem(post));
+
+                return {
+                    calendar,
+                    post,
+                    good,
+                };
+            },
             async onSubmit() {
                 this.fetchCount    = 0;
                 this.completeCount = 0;
                 this.loading       = true;
                 try {
-                    let res = await Promise.all([ this.getCalendarData(), this.getPostData(), this.getGoodData() ]);
-                    console.log(res);
+                    let res  = await Promise.all([ this.getCalendarData(), this.getPostData(), this.getGoodData() ]);
+                    let data = this.dataGroup(res);
 
-                    let data = {
-                        'calendar': res[ 0 ],
-                        'post'    : res[ 1 ],
-                        'good'    : res[ 2 ],
-                    };
                     this.makeExcel(data);
                     this.$notify({
                         title  : '成功',
@@ -227,6 +259,7 @@
                     });
                     console.log(data);
                 } catch (e) {
+                    console.log(e);
                     this.$notify.error({
                         title  : '错误',
                         message: '!!!发送错误,请联系管理员!!!'
