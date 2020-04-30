@@ -45,7 +45,7 @@
     "exceljs": "^3.3.1",
     "file-saver": "^2.0.2",
     "hotkeys-js": "^3.7.2",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "moment": "^2.24.0",
     "qs": "^6.9.0"
   }
